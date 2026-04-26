@@ -1,2 +1,6 @@
-# backend
-springboot &amp; java
+# Backend - AI 기반 쿠버네티스 모니터링 플랫폼
+
+## 프로젝트 소개
+Kubernetes 클러스터의 메트릭/로그/이벤트를 실시간 수집하고
+룰 기반 이상 탐지 및 AI 분석을 통해 자동으로 티켓을 생성하는
+SaaS형 모니터링 플랫폼의 백엔드 서버입니다.
