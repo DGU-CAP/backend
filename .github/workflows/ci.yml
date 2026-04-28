@@ -17,9 +17,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: cap
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
+          POSTGRES_DB: dgu_cap
+          POSTGRES_USER: dgu_cap
+          POSTGRES_PASSWORD: dgu_cap_local
         ports:
           - 5432:5432
         options: >-
@@ -55,9 +55,9 @@ jobs:
       - name: Build & Test
         run: ./gradlew build
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/cap
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: password
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dgu_cap
+          SPRING_DATASOURCE_USERNAME: dgu_cap
+          SPRING_DATASOURCE_PASSWORD: dgu_cap_local
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
 
