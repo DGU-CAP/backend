@@ -3,8 +3,8 @@ package com.dgu.cap.alert;
 import com.dgu.cap.ai.AiResult;
 import com.dgu.cap.anomaly.AnomalyType;
 import com.dgu.cap.kubernetes.PodInfo;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -12,15 +12,19 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AlertService {
 
-    private final JavaMailSender mailSender;
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     @Value("${alert.email}")
     private String alertEmail;
 
     public void sendTicketAlert(PodInfo pod, AnomalyType anomalyType, AiResult aiResult) {
+        if (mailSender == null) {
+            log.warn("JavaMailSender 미설정 - 이메일 발송 생략 (pod: {}, type: {})", pod.getPodName(), anomalyType);
+            return;
+        }
         try {
             String subject = "[CAP 알람] " + pod.getPodName() + " - " + anomalyType.name();
             String body = buildEmailBody(pod, anomalyType, aiResult);
