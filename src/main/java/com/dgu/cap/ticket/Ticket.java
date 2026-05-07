@@ -57,4 +57,8 @@ public class Ticket {
             this.resolvedAt = LocalDateTime.now();
         }
     }
+
+    public void initTicketNumber(String ticketNumber) {
+        this.ticketNumber = ticketNumber;
+    }
 }
