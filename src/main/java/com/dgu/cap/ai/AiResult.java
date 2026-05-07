@@ -7,7 +7,7 @@ import lombok.Getter;
 @Builder
 public class AiResult {
 
-    private String analysis;
+    private String aiAnalysis;
     private String recommendation;
     private String similarCases;
     private String severity;

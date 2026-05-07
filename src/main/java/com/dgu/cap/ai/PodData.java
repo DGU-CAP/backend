@@ -1,5 +1,6 @@
 package com.dgu.cap.ai;
 
+import com.dgu.cap.metric.MetricPoint;
 import lombok.Builder;
 import lombok.Getter;
 

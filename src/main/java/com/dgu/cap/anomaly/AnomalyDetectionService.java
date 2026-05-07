@@ -8,12 +8,14 @@ import com.dgu.cap.alert.SseService;
 import com.dgu.cap.kubernetes.KubernetesService;
 import com.dgu.cap.kubernetes.PodInfo;
 import com.dgu.cap.metric.PrometheusService;
+import com.dgu.cap.ticket.CreateTicketRequest;
 import com.dgu.cap.ticket.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -45,13 +47,13 @@ public class AnomalyDetectionService {
         String podName = pod.getPodName();
         String namespace = pod.getNamespace();
 
-        double cpu = prometheusService.getCpuUsage(podName, namespace);
-        if (cpu > thresholds.getCpu()) {
+        Double cpu = prometheusService.getCpu(podName);
+        if (cpu != null && cpu > thresholds.getCpu()) {
             handleAnomaly(pod, AnomalyType.CPU_HIGH, cpu, thresholds.getCpu());
         }
 
-        double memory = prometheusService.getMemoryUsage(podName, namespace);
-        if (memory > thresholds.getMemory()) {
+        Double memory = prometheusService.getMemory(podName);
+        if (memory != null && memory > thresholds.getMemory()) {
             handleAnomaly(pod, AnomalyType.MEMORY_HIGH, memory, thresholds.getMemory());
         }
 
@@ -59,8 +61,8 @@ public class AnomalyDetectionService {
             handleAnomaly(pod, AnomalyType.POD_RESTART, pod.getRestartCount(), thresholds.getRestart());
         }
 
-        double errorRate = prometheusService.getErrorRate(podName, namespace);
-        if (errorRate > thresholds.getErrorRate()) {
+        Double errorRate = prometheusService.getErrorRate(podName);
+        if (errorRate != null && errorRate > thresholds.getErrorRate()) {
             handleAnomaly(pod, AnomalyType.ERROR_RATE_HIGH, errorRate, thresholds.getErrorRate());
         }
 
@@ -74,27 +76,53 @@ public class AnomalyDetectionService {
     }
 
     private void handleAnomaly(PodInfo pod, AnomalyType anomalyType, double metricValue, double threshold) {
-        if (ticketService.isDuplicate(pod.getPodName(), anomalyType)) {
+        String podName = pod.getPodName();
+
+        if (ticketService.isDuplicate(podName, anomalyType.name())) {
             return;
         }
 
-        log.info("이상 탐지 - pod: {}, type: {}, value: {}", pod.getPodName(), anomalyType, metricValue);
+        log.info("이상 탐지 - pod: {}, type: {}, value: {}", podName, anomalyType, metricValue);
 
         PodData podData = PodData.builder()
-                .podName(pod.getPodName())
+                .podName(podName)
                 .namespace(pod.getNamespace())
                 .nodeName(pod.getNodeName())
                 .anomalyType(anomalyType.name())
                 .metricValue(metricValue)
                 .threshold(threshold)
                 .restartCount(pod.getRestartCount())
-                .recentEvents(kubernetesService.getPodEventMessages(pod.getPodName(), pod.getNamespace()))
+                .recentEvents(kubernetesService.getPodEventMessages(podName, pod.getNamespace()))
+                .cpuHistory(prometheusService.getCpuHistory(podName))
+                .memoryHistory(prometheusService.getMemoryHistory(podName))
                 .build();
 
         AiResult aiResult = aiService.analyze(podData);
 
-        ticketService.createTicket(pod, anomalyType, metricValue, threshold, aiResult);
+        Double currentCpu = prometheusService.getCpu(podName);
+        Double currentMemory = prometheusService.getMemory(podName);
+        Integer restarts = prometheusService.getRestarts(podName);
+        Double currentErrorRate = prometheusService.getErrorRate(podName);
+
+        CreateTicketRequest request = CreateTicketRequest.builder()
+                .podName(pod.getPodName())
+                .namespace(pod.getNamespace())
+                .nodeName(pod.getNodeName())
+                .anomalyType(anomalyType.name())
+                .metricValue(metricValue > 0 ? BigDecimal.valueOf(metricValue) : null)
+                .threshold(threshold > 0 ? BigDecimal.valueOf(threshold) : null)
+                .severity(aiResult != null ? aiResult.getSeverity() : "MEDIUM")
+                .aiAnalysis(aiResult != null ? aiResult.getAiAnalysis() : null)
+                .recommendation(aiResult != null ? aiResult.getRecommendation() : null)
+                .similarCases(aiResult != null ? aiResult.getSimilarCases() : null)
+                .cpu(currentCpu != null ? BigDecimal.valueOf(currentCpu) : null)
+                .memory(currentMemory != null ? BigDecimal.valueOf(currentMemory) : null)
+                .restarts(restarts)
+                .errorRate(currentErrorRate != null ? BigDecimal.valueOf(currentErrorRate) : null)
+                .build();
+
+        ticketService.createTicket(request);
         alertService.sendTicketAlert(pod, anomalyType, aiResult);
-        sseService.sendNewAlert(pod.getPodName(), anomalyType);
+        sseService.sendNewAlert(podName, anomalyType);
     }
 }
