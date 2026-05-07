@@ -74,7 +74,7 @@ public class KubernetesService {
         if (coreV1Api == null) return Collections.emptyList();
         try {
             String fieldSelector = "involvedObject.name=" + podName;
-            V1EventList eventList = coreV1Api.listNamespacedEvent(namespace)
+            CoreV1EventList eventList = coreV1Api.listNamespacedEvent(namespace)
                     .fieldSelector(fieldSelector)
                     .execute();
             return eventList.getItems().stream()
@@ -134,7 +134,7 @@ public class KubernetesService {
                 .build();
     }
 
-    private PodEvent toPodEvent(V1Event event) {
+    private PodEvent toPodEvent(CoreV1Event event) {
         return PodEvent.builder()
                 .type(event.getType())
                 .reason(event.getReason())
