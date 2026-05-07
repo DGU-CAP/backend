@@ -32,7 +32,10 @@ ai:
 
 anomaly:
   threshold:
-    cpu: 90.0
-    memory: 85.0
-    restart: 3
-    error-rate: 10.0
+    cpu: ${ANOMALY_THRESHOLD_CPU:90.0}
+    memory: ${ANOMALY_THRESHOLD_MEMORY:85.0}
+    restart: ${ANOMALY_THRESHOLD_RESTART:3}
+    error-rate: ${ANOMALY_THRESHOLD_ERROR_RATE:10.0}
+
+alert:
+  email: ${ALERT_EMAIL:admin@example.com}
