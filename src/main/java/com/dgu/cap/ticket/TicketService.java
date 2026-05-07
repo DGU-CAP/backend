@@ -5,8 +5,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -30,10 +30,8 @@ public class TicketService {
 
     @Transactional
     public Ticket createTicket(CreateTicketRequest request) {
-        String ticketNumber = generateTicketNumber();
-
         Ticket ticket = Ticket.builder()
-                .ticketNumber(ticketNumber)
+                .ticketNumber("PENDING")
                 .title(request.getPodName() + " " + request.getAnomalyType() + " 감지")
                 .podName(request.getPodName())
                 .namespace(request.getNamespace())
@@ -49,6 +47,7 @@ public class TicketService {
                 .build();
 
         ticket = ticketRepository.save(ticket);
+        ticket.initTicketNumber(String.format("TKT-%d-%03d", Year.now().getValue(), ticket.getId()));
 
         if (request.getCpu() != null) {
             TicketMetricSnapshot snapshot = TicketMetricSnapshot.builder()
@@ -112,9 +111,4 @@ public class TicketService {
         return actionLogRepository.findByTicketIdOrderByCreatedAtDesc(ticketId);
     }
 
-    private String generateTicketNumber() {
-        int year = LocalDate.now().getYear();
-        long count = ticketRepository.count() + 1;
-        return String.format("TKT-%d-%03d", year, count);
-    }
 }
