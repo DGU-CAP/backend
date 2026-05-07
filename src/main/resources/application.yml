@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: cap
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+
+prometheus:
+  url: ${PROMETHEUS_URL}
+
+loki:
+  url: ${LOKI_URL}
+
+ai:
+  url: ${AI_URL}
+
+anomaly:
+  threshold:
+    cpu: 90.0
+    memory: 85.0
+    restart: 3
+    error-rate: 10.0

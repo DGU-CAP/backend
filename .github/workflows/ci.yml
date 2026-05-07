@@ -55,11 +55,14 @@ jobs:
       - name: Build & Test
         run: ./gradlew build
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dgu_cap
-          SPRING_DATASOURCE_USERNAME: dgu_cap
-          SPRING_DATASOURCE_PASSWORD: dgu_cap_local
-          SPRING_DATA_REDIS_HOST: localhost
-          SPRING_DATA_REDIS_PORT: 6379
+          DB_URL: jdbc:postgresql://localhost:5432/dgu_cap
+          DB_USERNAME: dgu_cap
+          DB_PASSWORD: dgu_cap_local
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          PROMETHEUS_URL: http://localhost:9090
+          LOKI_URL: http://localhost:3100
+          AI_URL: http://localhost:8000
 
       - name: Configure AWS credentials
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
