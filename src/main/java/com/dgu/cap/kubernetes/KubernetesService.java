@@ -10,7 +10,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -25,17 +24,15 @@ public class KubernetesService {
     @PostConstruct
     public void init() {
         try {
-            // K8s Pod 내부 실행 시 (in-cluster config)
             ApiClient client = ClientBuilder.cluster().build();
             Configuration.setDefaultApiClient(client);
             log.info("Kubernetes in-cluster config 로드 완료");
-        } catch (IOException e) {
+        } catch (Exception e) {
             try {
-                // 로컬 개발 환경 (kubeconfig)
                 ApiClient client = ClientBuilder.standard().build();
                 Configuration.setDefaultApiClient(client);
                 log.info("Kubernetes kubeconfig 로드 완료");
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 log.warn("Kubernetes client 초기화 실패 - K8s 연동 비활성화: {}", ex.getMessage());
                 return;
             }

@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,7 +36,7 @@ public class AiService {
                 .severity("MEDIUM")
                 .aiAnalysis("AI 서버 응답 없음 - " + anomalyType + " 이상 감지됨")
                 .recommendation("수동 확인 필요")
-                .similarCases("")
+                .similarCases(List.of())
                 .build();
     }
 }
