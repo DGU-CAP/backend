@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface TicketMetricSnapshotRepository extends JpaRepository<TicketMetricSnapshot, Long> {
 
-    Optional<TicketMetricSnapshot> findByTicketId(Long ticketId);
+    Optional<TicketMetricSnapshot> findByTicket_Id(Long ticketId);
 }
