@@ -31,6 +31,15 @@ public class AiService {
         }
     }
 
+    public void sendMetrics(MetricsSendRequest request) {
+        try {
+            restTemplate.postForObject(aiUrl + "/metrics", request, Void.class);
+            log.debug("메트릭 전송 완료 - pod: {}", request.getPodName());
+        } catch (Exception e) {
+            log.warn("메트릭 전송 실패 - pod: {}, error: {}", request.getPodName(), e.getMessage());
+        }
+    }
+
     private AiResult fallback(String anomalyType) {
         return AiResult.builder()
                 .severity("MEDIUM")
