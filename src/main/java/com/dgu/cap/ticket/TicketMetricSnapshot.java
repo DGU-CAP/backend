@@ -1,5 +1,6 @@
 package com.dgu.cap.ticket;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,6 +19,7 @@ public class TicketMetricSnapshot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id")
     private Ticket ticket;
