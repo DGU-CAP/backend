@@ -66,15 +66,15 @@ public class PrometheusService {
     }
 
     public List<MetricPoint> getCpuHistory(String podName) {
-        return queryRange(String.format(QUERY_CPU, podName), 1800);
+        return queryRange(String.format(QUERY_CPU, podName), 300, 60);
     }
 
     public List<MetricPoint> getMemoryHistory(String podName) {
-        return queryRange(String.format(QUERY_MEMORY, podName, podName), 1800);
+        return queryRange(String.format(QUERY_MEMORY, podName, podName), 300, 60);
     }
 
     public List<MetricPoint> getErrorRateHistory(String podName) {
-        return queryRange(String.format(QUERY_ERROR_RATE, podName, podName), 1800);
+        return queryRange(String.format(QUERY_ERROR_RATE, podName, podName), 300, 60);
     }
 
     @SuppressWarnings("unchecked")
@@ -107,6 +107,11 @@ public class PrometheusService {
 
     @SuppressWarnings("unchecked")
     private List<MetricPoint> queryRange(String query, int rangeSeconds) {
+        return queryRange(query, rangeSeconds, 300);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<MetricPoint> queryRange(String query, int rangeSeconds, int stepSeconds) {
         try {
             long now = Instant.now().getEpochSecond();
             long start = now - rangeSeconds;
@@ -115,7 +120,7 @@ public class PrometheusService {
                     .queryParam("query", query)
                     .queryParam("start", start)
                     .queryParam("end", now)
-                    .queryParam("step", 300)
+                    .queryParam("step", stepSeconds)
                     .toUriString();
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
