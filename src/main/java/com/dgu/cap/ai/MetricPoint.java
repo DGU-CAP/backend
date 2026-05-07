@@ -1,12 +1,8 @@
 package com.dgu.cap.ai;
 
-import lombok.Builder;
-import lombok.Getter;
-
-@Getter
-@Builder
+/**
+ * @deprecated Use {@link com.dgu.cap.metric.MetricPoint} instead
+ */
+@Deprecated
 public class MetricPoint {
-
-    private long timestamp;
-    private double value;
 }
