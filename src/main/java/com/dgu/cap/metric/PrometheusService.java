@@ -24,7 +24,6 @@ public class PrometheusService {
     @Value("${prometheus.url}")
     private String prometheusUrl;
 
-    // PromQL 쿼리 상수
     private static final String QUERY_CPU =
             "rate(container_cpu_usage_seconds_total{pod=\"%s\",container!=\"\"}[5m]) * 100";
     private static final String QUERY_MEMORY =
@@ -50,7 +49,6 @@ public class PrometheusService {
         return queryRange(query, rangeSeconds);
     }
 
-    // AnomalyDetectionService에서 호출하는 단순 값 조회 메서드
     public Double getCpu(String podName) {
         return querySingleValue(String.format(QUERY_CPU, podName));
     }
