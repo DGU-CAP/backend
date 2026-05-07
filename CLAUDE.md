@@ -81,18 +81,24 @@ com.dgu.cap
 │   └── SseController.java             # GET /api/stream
 ├── metric/
 │   ├── PrometheusService.java          # Prometheus HTTP API 연동
-│   └── MetricController.java
+│   ├── MetricController.java
+│   ├── MetricPoint.java                # 시계열 데이터 포인트
+│   └── CurrentMetric.java
 ├── log/
 │   ├── LokiService.java                # Loki HTTP API 연동
 │   └── LogController.java
 ├── kubernetes/
 │   ├── KubernetesService.java          # K8s Java Client 연동
-│   └── PodController.java
+│   ├── PodController.java
+│   ├── PodInfo.java
+│   └── PodEvent.java
 └── ai/
     ├── AiService.java                  # FastAPI POST /analyze + fallback
-    ├── PodData.java                    # AI 요청 DTO
+    ├── MetricsCollectionScheduler.java # 60초 스케줄러 — 전체 Pod 메트릭 수집 후 AI 전송
+    ├── PodData.java                    # AI /analyze 요청 DTO
     ├── AiResult.java                   # AI 응답 DTO
-    └── MetricPoint.java                # 시계열 데이터 포인트
+    ├── MetricsData.java                # 메트릭 시계열 묶음 DTO
+    └── MetricsSendRequest.java         # AI /metrics 요청 DTO
 ```
 
 ## 아키텍처
