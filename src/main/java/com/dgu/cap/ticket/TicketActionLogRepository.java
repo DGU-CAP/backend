@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface TicketActionLogRepository extends JpaRepository<TicketActionLog, Long> {
 
-    List<TicketActionLog> findByTicketIdOrderByCreatedAtDesc(Long ticketId);
+    List<TicketActionLog> findByTicket_IdOrderByCreatedAtDesc(Long ticketId);
 }
