@@ -47,7 +47,7 @@ public class TicketService {
                 .build();
 
         ticket = ticketRepository.save(ticket);
-        ticket.initTicketNumber(String.format("TKT-%d-%03d", Year.now().getValue(), ticket.getId()));
+        ticket.initTicketNumber(String.format("TKT-%d-%06d", Year.now().getValue(), ticket.getId()));
 
         if (request.getCpu() != null) {
             TicketMetricSnapshot snapshot = TicketMetricSnapshot.builder()
@@ -86,7 +86,7 @@ public class TicketService {
     }
 
     public TicketMetricSnapshot getMetricSnapshot(Long ticketId) {
-        return metricSnapshotRepository.findByTicketId(ticketId).orElse(null);
+        return metricSnapshotRepository.findByTicket_Id(ticketId).orElse(null);
     }
 
     @Transactional
@@ -108,7 +108,7 @@ public class TicketService {
     }
 
     public List<TicketActionLog> getActionLogs(Long ticketId) {
-        return actionLogRepository.findByTicketIdOrderByCreatedAtDesc(ticketId);
+        return actionLogRepository.findByTicket_IdOrderByCreatedAtDesc(ticketId);
     }
 
 }

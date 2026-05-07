@@ -55,34 +55,35 @@ public class AnomalyDetectionService {
         String namespace = pod.getNamespace();
 
         Double cpu = prometheusService.getCpu(podName);
-        if (cpu != null && cpu > thresholds.getCpu()) {
-            handleAnomaly(pod, AnomalyType.CPU_HIGH, cpu, thresholds.getCpu());
-        }
-
         Double memory = prometheusService.getMemory(podName);
-        if (memory != null && memory > thresholds.getMemory()) {
-            handleAnomaly(pod, AnomalyType.MEMORY_HIGH, memory, thresholds.getMemory());
-        }
-
-        if (pod.getRestartCount() >= thresholds.getRestart()) {
-            handleAnomaly(pod, AnomalyType.POD_RESTART, pod.getRestartCount(), thresholds.getRestart());
-        }
-
         Double errorRate = prometheusService.getErrorRate(podName);
-        if (errorRate != null && errorRate > thresholds.getErrorRate()) {
-            handleAnomaly(pod, AnomalyType.ERROR_RATE_HIGH, errorRate, thresholds.getErrorRate());
+
+        boolean hasCpuAnomaly = cpu != null && cpu > thresholds.getCpu();
+        boolean hasMemoryAnomaly = memory != null && memory > thresholds.getMemory();
+        boolean hasRestartAnomaly = pod.getRestartCount() >= thresholds.getRestart();
+        boolean hasErrorRateAnomaly = errorRate != null && errorRate > thresholds.getErrorRate();
+        boolean hasOomKilled = kubernetesService.hasOomKilled(podName, namespace);
+        boolean hasCrashLoop = kubernetesService.hasCrashLoopBackOff(podName, namespace);
+
+        if (!hasCpuAnomaly && !hasMemoryAnomaly && !hasRestartAnomaly && !hasErrorRateAnomaly && !hasOomKilled && !hasCrashLoop) {
+            return;
         }
 
-        if (kubernetesService.hasOomKilled(podName, namespace)) {
-            handleAnomaly(pod, AnomalyType.OOM_KILLED, 0, 0);
-        }
+        List<Double> cpuHistory = toDoubleList(prometheusService.getCpuHistory(podName));
+        List<Double> memoryHistory = toDoubleList(prometheusService.getMemoryHistory(podName));
+        List<Double> errorRateHistory = toDoubleList(prometheusService.getErrorRateHistory(podName));
 
-        if (kubernetesService.hasCrashLoopBackOff(podName, namespace)) {
-            handleAnomaly(pod, AnomalyType.CRASH_LOOP, 0, 0);
-        }
+        if (hasCpuAnomaly) handleAnomaly(pod, AnomalyType.CPU_HIGH, cpu, thresholds.getCpu(), cpu, memory, errorRate, cpuHistory, memoryHistory, errorRateHistory);
+        if (hasMemoryAnomaly) handleAnomaly(pod, AnomalyType.MEMORY_HIGH, memory, thresholds.getMemory(), cpu, memory, errorRate, cpuHistory, memoryHistory, errorRateHistory);
+        if (hasRestartAnomaly) handleAnomaly(pod, AnomalyType.POD_RESTART, pod.getRestartCount(), thresholds.getRestart(), cpu, memory, errorRate, cpuHistory, memoryHistory, errorRateHistory);
+        if (hasErrorRateAnomaly) handleAnomaly(pod, AnomalyType.ERROR_RATE_HIGH, errorRate, thresholds.getErrorRate(), cpu, memory, errorRate, cpuHistory, memoryHistory, errorRateHistory);
+        if (hasOomKilled) handleAnomaly(pod, AnomalyType.OOM_KILLED, 0, 0, cpu, memory, errorRate, cpuHistory, memoryHistory, errorRateHistory);
+        if (hasCrashLoop) handleAnomaly(pod, AnomalyType.CRASH_LOOP, 0, 0, cpu, memory, errorRate, cpuHistory, memoryHistory, errorRateHistory);
     }
 
-    private void handleAnomaly(PodInfo pod, AnomalyType anomalyType, double metricValue, double threshold) {
+    private void handleAnomaly(PodInfo pod, AnomalyType anomalyType, double metricValue, double threshold,
+                                Double cpu, Double memory, Double errorRate,
+                                List<Double> cpuHistory, List<Double> memoryHistory, List<Double> errorRateHistory) {
         String podName = pod.getPodName();
         String namespace = pod.getNamespace();
 
@@ -92,14 +93,10 @@ public class AnomalyDetectionService {
 
         log.info("이상 탐지 - pod: {}, type: {}, value: {}", podName, anomalyType, metricValue);
 
-        List<Double> cpuValues = toDoubleList(prometheusService.getCpuHistory(podName));
-        List<Double> memoryValues = toDoubleList(prometheusService.getMemoryHistory(podName));
-        List<Double> errorRateValues = toDoubleList(prometheusService.getErrorRateHistory(podName));
-
         MetricsData metrics = MetricsData.builder()
-                .cpu(cpuValues.isEmpty() ? List.of(0.0) : cpuValues)
-                .memory(memoryValues.isEmpty() ? List.of(0.0) : memoryValues)
-                .errorRate(errorRateValues.isEmpty() ? List.of(0.0) : errorRateValues)
+                .cpu(cpuHistory.isEmpty() ? List.of(0.0) : cpuHistory)
+                .memory(memoryHistory.isEmpty() ? List.of(0.0) : memoryHistory)
+                .errorRate(errorRateHistory.isEmpty() ? List.of(0.0) : errorRateHistory)
                 .build();
 
         PodData podData = PodData.builder()
@@ -116,11 +113,6 @@ public class AnomalyDetectionService {
 
         AiResult aiResult = aiService.analyze(podData);
 
-        Double currentCpu = prometheusService.getCpu(podName);
-        Double currentMemory = prometheusService.getMemory(podName);
-        Integer restarts = prometheusService.getRestarts(podName);
-        Double currentErrorRate = prometheusService.getErrorRate(podName);
-
         String similarCasesStr = aiResult.getSimilarCases() != null
                 ? String.join("\n", aiResult.getSimilarCases())
                 : null;
@@ -136,10 +128,10 @@ public class AnomalyDetectionService {
                 .aiAnalysis(aiResult.getAiAnalysis())
                 .recommendation(aiResult.getRecommendation())
                 .similarCases(similarCasesStr)
-                .cpu(currentCpu != null ? BigDecimal.valueOf(currentCpu) : null)
-                .memory(currentMemory != null ? BigDecimal.valueOf(currentMemory) : null)
-                .restarts(restarts)
-                .errorRate(currentErrorRate != null ? BigDecimal.valueOf(currentErrorRate) : null)
+                .cpu(cpu != null ? BigDecimal.valueOf(cpu) : null)
+                .memory(memory != null ? BigDecimal.valueOf(memory) : null)
+                .restarts(pod.getRestartCount())
+                .errorRate(errorRate != null ? BigDecimal.valueOf(errorRate) : null)
                 .build();
 
         ticketService.createTicket(request);
