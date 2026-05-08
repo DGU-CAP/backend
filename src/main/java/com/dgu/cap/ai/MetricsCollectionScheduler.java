@@ -27,13 +27,17 @@ public class MetricsCollectionScheduler {
 
     @Scheduled(fixedDelay = 60000)
     public void collectAndSendMetrics() {
-        List<PodInfo> pods = kubernetesService.getAllPods();
-        for (PodInfo pod : pods) {
-            try {
-                sendMetrics(pod);
-            } catch (Exception e) {
-                log.warn("메트릭 수집/전송 실패 - pod: {}, error: {}", pod.getPodName(), e.getMessage());
+        try {
+            List<PodInfo> pods = kubernetesService.getAllPods();
+            for (PodInfo pod : pods) {
+                try {
+                    sendMetrics(pod);
+                } catch (Exception e) {
+                    log.warn("메트릭 수집/전송 실패 - pod: {}, error: {}", pod.getPodName(), e.getMessage());
+                }
             }
+        } catch (Exception e) {
+            log.error("메트릭 수집 스케줄러 전체 실패: {}", e.getMessage());
         }
     }
 
