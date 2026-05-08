@@ -48,7 +48,7 @@ public class KubernetesService {
             return podList.getItems().stream()
                     .map(this::toPodInfo)
                     .collect(Collectors.toList());
-        } catch (ApiException e) {
+        } catch (Exception e) {
             log.warn("Pod 목록 조회 실패 - namespace: {}, error: {}", namespace, e.getMessage());
             return Collections.emptyList();
         }
@@ -61,7 +61,7 @@ public class KubernetesService {
             return podList.getItems().stream()
                     .map(this::toPodInfo)
                     .collect(Collectors.toList());
-        } catch (ApiException e) {
+        } catch (Exception e) {
             log.warn("전체 Pod 목록 조회 실패: {}", e.getMessage());
             return Collections.emptyList();
         }
@@ -77,7 +77,7 @@ public class KubernetesService {
             return eventList.getItems().stream()
                     .map(this::toPodEvent)
                     .collect(Collectors.toList());
-        } catch (ApiException e) {
+        } catch (Exception e) {
             log.warn("Pod 이벤트 조회 실패 - pod: {}, error: {}", podName, e.getMessage());
             return Collections.emptyList();
         }

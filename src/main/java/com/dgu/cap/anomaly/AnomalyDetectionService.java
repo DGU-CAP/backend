@@ -40,13 +40,17 @@ public class AnomalyDetectionService {
 
     @Scheduled(fixedDelay = 30000)
     public void detectAnomalies() {
-        List<PodInfo> pods = kubernetesService.getAllPods();
-        for (PodInfo pod : pods) {
-            try {
-                checkPod(pod);
-            } catch (Exception e) {
-                log.warn("Pod 이상 탐지 중 오류 - pod: {}, error: {}", pod.getPodName(), e.getMessage());
+        try {
+            List<PodInfo> pods = kubernetesService.getAllPods();
+            for (PodInfo pod : pods) {
+                try {
+                    checkPod(pod);
+                } catch (Exception e) {
+                    log.warn("Pod 이상 탐지 중 오류 - pod: {}, error: {}", pod.getPodName(), e.getMessage());
+                }
             }
+        } catch (Exception e) {
+            log.error("이상 탐지 스케줄러 전체 실패: {}", e.getMessage());
         }
     }
 
