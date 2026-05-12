@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -80,11 +81,13 @@ public class PrometheusService {
     @SuppressWarnings("unchecked")
     private Double querySingleValue(String query) {
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(prometheusUrl + "/api/v1/query")
+            URI uri = UriComponentsBuilder.fromHttpUrl(prometheusUrl + "/api/v1/query")
                     .queryParam("query", query)
-                    .toUriString();
+                    .build()
+                    .encode()
+                    .toUri();
 
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(uri, Map.class);
             if (response == null) return null;
 
             Map<String, Object> data = (Map<String, Object>) response.get("data");
@@ -116,14 +119,16 @@ public class PrometheusService {
             long now = Instant.now().getEpochSecond();
             long start = now - rangeSeconds;
 
-            String url = UriComponentsBuilder.fromHttpUrl(prometheusUrl + "/api/v1/query_range")
+            URI uri = UriComponentsBuilder.fromHttpUrl(prometheusUrl + "/api/v1/query_range")
                     .queryParam("query", query)
                     .queryParam("start", start)
                     .queryParam("end", now)
                     .queryParam("step", stepSeconds)
-                    .toUriString();
+                    .build()
+                    .encode()
+                    .toUri();
 
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(uri, Map.class);
             if (response == null) return Collections.emptyList();
 
             Map<String, Object> data = (Map<String, Object>) response.get("data");

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -38,15 +39,17 @@ public class LokiService {
 
             String query = String.format("{pod=\"%s\"} |= \"ERROR\"", podName);
 
-            String url = UriComponentsBuilder.fromHttpUrl(lokiUrl + "/loki/api/v1/query_range")
+            URI uri = UriComponentsBuilder.fromHttpUrl(lokiUrl + "/loki/api/v1/query_range")
                     .queryParam("query", query)
                     .queryParam("start", start)
                     .queryParam("end", now)
                     .queryParam("limit", limit)
                     .queryParam("direction", "backward")
-                    .toUriString();
+                    .build()
+                    .encode()
+                    .toUri();
 
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(uri, Map.class);
             if (response == null) return Collections.emptyList();
 
             Map<String, Object> data = (Map<String, Object>) response.get("data");
