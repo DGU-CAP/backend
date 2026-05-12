@@ -28,7 +28,7 @@ public class PrometheusService {
     private static final String QUERY_CPU =
             "rate(container_cpu_usage_seconds_total{pod=\"%s\",container!=\"\"}[5m]) * 100";
     private static final String QUERY_MEMORY =
-            "container_memory_usage_bytes{pod=\"%s\",container!=\"\"} / container_spec_memory_limit_bytes{pod=\"%s\",container!=\"\",container_spec_memory_limit_bytes!=0} * 100";
+            "container_memory_usage_bytes{pod=\"%s\",container!=\"\"} / container_spec_memory_limit_bytes{pod=\"%s\",container!=\"\",container_spec_memory_limit_bytes!=\"0\"} * 100";
     private static final String QUERY_RESTARTS =
             "kube_pod_container_status_restarts_total{pod=\"%s\"}";
     private static final String QUERY_ERROR_RATE =
