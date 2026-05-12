@@ -48,6 +48,7 @@ public class TicketService {
 
         ticket = ticketRepository.save(ticket);
         ticket.initTicketNumber(String.format("TKT-%d-%06d", Year.now().getValue(), ticket.getId()));
+        ticketRepository.save(ticket);
 
         if (request.getCpu() != null) {
             TicketMetricSnapshot snapshot = TicketMetricSnapshot.builder()
