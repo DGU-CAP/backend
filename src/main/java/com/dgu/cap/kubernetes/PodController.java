@@ -16,20 +16,28 @@ public class PodController {
 
     @GetMapping("/pods")
     public ResponseEntity<List<PodInfo>> getPods(
-            @RequestParam(defaultValue = "default") String namespace) {
+            @RequestParam(required = false) String namespace) {
+        if (namespace == null || namespace.isBlank()) {
+            return ResponseEntity.ok(kubernetesService.getAllPods());
+        }
         return ResponseEntity.ok(kubernetesService.getPods(namespace));
     }
 
     @GetMapping("/pods/{podName}/events")
     public ResponseEntity<List<PodEvent>> getPodEvents(
             @PathVariable String podName,
-            @RequestParam(defaultValue = "default") String namespace) {
-        return ResponseEntity.ok(kubernetesService.getPodEvents(podName, namespace));
+            @RequestParam(required = false) String namespace) {
+        String ns = (namespace == null || namespace.isBlank()) ? "default" : namespace;
+        return ResponseEntity.ok(kubernetesService.getPodEvents(podName, ns));
     }
 
     @GetMapping("/topology")
     public ResponseEntity<Map<String, Object>> getTopology(
-            @RequestParam(defaultValue = "default") String namespace) {
+            @RequestParam(required = false) String namespace) {
+        if (namespace == null || namespace.isBlank()) {
+            List<PodInfo> pods = kubernetesService.getAllPods();
+            return ResponseEntity.ok(Map.of("pods", pods, "namespace", "all"));
+        }
         List<PodInfo> pods = kubernetesService.getPods(namespace);
         return ResponseEntity.ok(Map.of("pods", pods, "namespace", namespace));
     }
